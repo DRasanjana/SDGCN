@@ -13,33 +13,33 @@ class GCN_BERT(object):
         #tf.set_random_seed(-1)
         # PLACEHOLDERS
         rand_base = 0.01
-        self.input_x = tf.placeholder(tf.float32, [None, sequence_length,word_embedding_dim], name="input_x")  # X - The Data
-        self.input_target = tf.placeholder(tf.float32, [None, target_sequence_length,word_embedding_dim], name="input_x")  # The target
-        self.input_targets_all = tf.placeholder(tf.float32, [None,targets_num_max, target_sequence_length,word_embedding_dim], name="input_x")  #All the targets
+        self.input_x = tf.compat.v1.placeholder(tf.float32, [None, sequence_length,word_embedding_dim], name="input_x")  # X - The Data
+        self.input_target = tf.compat.v1.placeholder(tf.float32, [None, target_sequence_length,word_embedding_dim], name="input_x")  # The target
+        self.input_targets_all = tf.compat.v1.placeholder(tf.float32, [None,targets_num_max, target_sequence_length,word_embedding_dim], name="input_x")  #All the targets
 
-        self.sen_len = tf.placeholder(tf.int32, None, name='sen_len')#lens of sentence
-        self.target_len = tf.placeholder(tf.int32, None, name='target_len')#lens of target
+        self.sen_len = tf.compat.v1.placeholder(tf.int32, None, name='sen_len')#lens of sentence
+        self.target_len = tf.compat.v1.placeholder(tf.int32, None, name='target_len')#lens of target
         with tf.name_scope('targets_all_len'):
-            self.targets_all_len_a = tf.placeholder(tf.int32, [None,targets_num_max],name="targets_all_len")
+            self.targets_all_len_a = tf.compat.v1.placeholder(tf.int32, [None,targets_num_max],name="targets_all_len")
             batch_size = tf.shape(self.input_x)[0]
             self.targets_all_len = []
             for i in range(targets_num_max):
                 targets_i_len = tf.slice(self.targets_all_len_a, [0, i], [batch_size, 1])
                 # targets_i_len = self.targets_all_len_a[:,i]
                 self.targets_all_len.append(tf.squeeze(targets_i_len))              #lens of every target
-        self.targets_num = tf.placeholder(tf.int32, None, name='targets_num')     #The number os targets
-        self.relate_cross = tf.placeholder(tf.float32, [None,targets_num_max, targets_num_max], name='relate_cross')  #the relation between targets
-        self.relate_self = tf.placeholder(tf.float32, [None, targets_num_max, targets_num_max], name='relate_self')
-        self.target_which = tf.placeholder(tf.float32, [None, targets_num_max, ], name='which_position')
-        self.target_position = tf.placeholder(tf.float32, [None, sequence_length], name='target_position')
+        self.targets_num = tf.compat.v1.placeholder(tf.int32, None, name='targets_num')     #The number os targets
+        self.relate_cross = tf.compat.v1.placeholder(tf.float32, [None,targets_num_max, targets_num_max], name='relate_cross')  #the relation between targets
+        self.relate_self = tf.compat.v1.placeholder(tf.float32, [None, targets_num_max, targets_num_max], name='relate_self')
+        self.target_which = tf.compat.v1.placeholder(tf.float32, [None, targets_num_max, ], name='which_position')
+        self.target_position = tf.compat.v1.placeholder(tf.float32, [None, sequence_length], name='target_position')
         with tf.name_scope('targets_all_position'):
-            self.targets_all_position_a = tf.placeholder(tf.float32, [None,targets_num_max,sequence_length],name="targets_all_position")
+            self.targets_all_position_a = tf.compat.v1.placeholder(tf.float32, [None,targets_num_max,sequence_length],name="targets_all_position")
             self.targets_all_position = []
             for i in range(targets_num_max):
                 targets_i_len = self.targets_all_position_a[:, i,:]
                 self.targets_all_position.append(tf.squeeze(targets_i_len))
-        self.input_y = tf.placeholder(tf.float32, [None, num_classes], name="input_y")  # Y - The Lables
-        self.dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")  # Dropout
+        self.input_y = tf.compat.v1.placeholder(tf.float32, [None, num_classes], name="input_y")  # Y - The Lables
+        self.dropout_keep_prob = tf.compat.v1.placeholder(tf.float32, name="dropout_keep_prob")  # Dropout
 
         l2_loss = tf.constant(0.0)  # Keeping track of l2 regularization loss
 
@@ -48,39 +48,39 @@ class GCN_BERT(object):
         # Embedding for the context
         with tf.name_scope("embedded_sen"):
             self.embedded_sen = self.input_x    #(?,78,768)
-            self.embedded_sen = tf.nn.dropout(self.embedded_sen, keep_prob=self.dropout_keep_prob)
+            self.embedded_sen = tf.compat.v1.nn.dropout(self.embedded_sen, keep_prob=self.dropout_keep_prob)
             embedding_size = word_embedding_dim
             print('embedding_size {}'.format(embedding_size))
             num_hidden = word_embedding_dim
         # Embedding for the target
         with tf.name_scope("embedding_target"):
             self.embedded_target = self.input_target    #(?,21,768)
-            self.embedded_target = tf.nn.dropout(self.embedded_target, keep_prob=self.dropout_keep_prob)
+            self.embedded_target = tf.compat.v1.nn.dropout(self.embedded_target, keep_prob=self.dropout_keep_prob)
         # Embedding for all targets
         with tf.name_scope("embedding_targets"):
             self.embedded_targets_all = list(range(targets_num_max))
             for i in range(targets_num_max):
                 #get a target
                 self.embedded_target_i = self.input_targets_all[:,i,:,:]
-                self.embedded_target_i = tf.nn.dropout(self.embedded_target_i, keep_prob=self.dropout_keep_prob)
+                self.embedded_target_i = tf.compat.v1.nn.dropout(self.embedded_target_i, keep_prob=self.dropout_keep_prob)
                 self.embedded_targets_all[i] = self.embedded_target_i   #13*(?,21,300)
 
         num_hidden = 300
         #2. LSTM LAYER ######################################################################
         # Bi-LSTM for the context
         with tf.name_scope("Bi-LSTM_sentence"):
-            cell = tf.nn.rnn_cell.LSTMCell
+            cell = tf.compat.v1.nn.rnn_cell.LSTMCell
             self.LSTM_Hiddens_sen = bi_dynamic_rnn(cell, self.embedded_sen, num_hidden, self.sen_len,
                                            sequence_length, 'bi-lstm-sentence' ,'all',
                                            dropout = True, dropout_prob= self.dropout_keep_prob) #(?,78,600)
             pool_sen = reduce_mean_with_len(self.LSTM_Hiddens_sen, self.sen_len)
 
         # Bi-LSTM for the targets
-        with tf.variable_scope("Bi-LSTM_targets") as scope:
+        with tf.compat.v1.variable_scope("Bi-LSTM_targets") as scope:
             self.LSTM_targets_all = list(range(targets_num_max))
             poor_targets_all = list(range(targets_num_max))
             for i in range(targets_num_max):
-                cell = tf.nn.rnn_cell.LSTMCell
+                cell = tf.compat.v1.nn.rnn_cell.LSTMCell
                 self.LSTM_targets_all[i] = bi_dynamic_rnn(cell, self.embedded_targets_all[i], num_hidden, self.targets_all_len[i],
                                                 target_sequence_length, 'bi-lstm-targets', 'all',
                                                 dropout=True, dropout_prob=self.dropout_keep_prob)  # (?,21,600)
@@ -90,7 +90,7 @@ class GCN_BERT(object):
 
         # 3. Attention LAYER ######################################################################
         # all targets to sentence attention
-        with tf.variable_scope("Attention-targets_all2sentence") as scope:
+        with tf.compat.v1.variable_scope("Attention-targets_all2sentence") as scope:
             self.outputs_ss = list(range(targets_num_max))        #all the target attention for the sentence
             self.outputs_ts = list(range(targets_num_max))
             for i in range(targets_num_max):
@@ -151,10 +151,10 @@ class GCN_BERT(object):
         self.GCN2_out = tf.multiply(GCN2_out, target_which)  #(?,600,13)*(?,1,13) = (?,600,13)
         self.targets_representation = tf.reduce_sum(self.GCN2_out, 2)  # (?,600)
 
-        W = tf.Variable(tf.random_normal([2 * num_hidden, num_classes]))
-        b = tf.Variable(tf.random_normal([num_classes]))
+        W = tf.Variable(tf.random.normal([2 * num_hidden, num_classes]))
+        b = tf.Variable(tf.random.normal([num_classes]))
         with tf.name_scope("output"):
-            self.scores = tf.nn.xw_plus_b(self.targets_representation, W,b, name="scores")
+            self.scores = tf.compat.v1.nn.xw_plus_b(self.targets_representation, W,b, name="scores")
             # self.scores = self.targets_representation
             l2_loss += tf.nn.l2_loss(W)
             l2_loss += tf.nn.l2_loss(b)

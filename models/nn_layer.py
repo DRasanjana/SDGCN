@@ -49,12 +49,12 @@ def dynamic_rnn(cell, inputs, n_hidden, length, max_len, scope_name, out_type='l
 
 def bi_dynamic_rnn(cell, inputs, n_hidden, length, max_len, scope_name, out_type='last',dropout = True, dropout_prob=0.5):
     if dropout:
-        cell_fw = tf.nn.rnn_cell.DropoutWrapper(cell(num_units=n_hidden, state_is_tuple=True),output_keep_prob=dropout_prob)
-        cell_bw = tf.nn.rnn_cell.DropoutWrapper(cell(num_units=n_hidden, state_is_tuple=True),output_keep_prob=dropout_prob)
+        cell_fw = tf.compat.v1.nn.rnn_cell.DropoutWrapper(cell(num_units=n_hidden, state_is_tuple=True),output_keep_prob=dropout_prob)
+        cell_bw = tf.compat.v1.nn.rnn_cell.DropoutWrapper(cell(num_units=n_hidden, state_is_tuple=True),output_keep_prob=dropout_prob)
     else:
         cell_fw=cell(n_hidden)
         cell_bw=cell(n_hidden)
-    outputs, state = tf.nn.bidirectional_dynamic_rnn(
+    outputs, state = tf.compat.v1.nn.bidirectional_dynamic_rnn(
         cell_fw=cell_fw,
         cell_bw=cell_bw,
         inputs=inputs,
@@ -80,7 +80,7 @@ def bi_dynamic_rnn(cell, inputs, n_hidden, length, max_len, scope_name, out_type
 
 def bi_dynamic_rnn_diff(cell, inputs_fw, inputs_bw, n_hidden, l_fw, l_bw, max_len, scope_name):
     with tf.name_scope('forward_lstm'):
-        outputs_fw, state_fw = tf.nn.dynamic_rnn(
+        outputs_fw, state_fw = tf.compat.v1.nn.dynamic_rnn(
             cell(n_hidden),
             inputs=inputs_fw,
             sequence_length=l_fw,
@@ -92,7 +92,7 @@ def bi_dynamic_rnn_diff(cell, inputs_fw, inputs_bw, n_hidden, l_fw, l_bw, max_le
         output_fw = tf.gather(tf.reshape(outputs_fw, [-1, n_hidden]), index)  # batch_size * n_hidden
 
     with tf.name_scope('backward_lstm'):
-        outputs_bw, state_bw = tf.nn.dynamic_rnn(
+        outputs_bw, state_bw = tf.compat.v1.nn.dynamic_rnn(
             cell(n_hidden),
             inputs=inputs_bw,
             sequence_length=l_bw,
@@ -131,7 +131,7 @@ def reduce_mean_with_len(inputs, length):
     :return: 2-D tensor
     """
     length = tf.cast(tf.reshape(length, [-1, 1]), tf.float32) + 1e-9
-    inputs = tf.reduce_sum(inputs, 1, keep_dims=False) / length
+    inputs = tf.compat.v1.reduce_sum(inputs, 1, keep_dims=False) / length
     return inputs
 
 
@@ -152,7 +152,7 @@ def softmax_layer(inputs, n_hidden, random_base, keep_prob, l2_reg, n_class, sco
         regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
     )
     with tf.name_scope('softmax'):
-        outputs = tf.nn.dropout(inputs, keep_prob=keep_prob)
+        outputs = tf.compat.v1.nn.dropout(inputs, keep_prob=keep_prob)
         predict = tf.matmul(outputs, w) + b
         predict = tf.nn.softmax(predict)
     return predict

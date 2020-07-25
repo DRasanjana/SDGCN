@@ -8,13 +8,13 @@ import tensorflow as tf
 
 def softmax_with_len(inputs, length, max_len):
     inputs = tf.cast(inputs, tf.float32)
-    max_axis = tf.reduce_max(inputs, -1, keep_dims=True)
+    max_axis = tf.compat.v1.reduce_max(inputs, -1, keep_dims=True)
     inputs = tf.exp(inputs - max_axis)
     # inputs = tf.exp(inputs)
     length = tf.reshape(length, [-1])
     mask = tf.reshape(tf.cast(tf.sequence_mask(length, max_len), tf.float32), tf.shape(inputs))
     inputs *= mask
-    _sum = tf.reduce_sum(inputs, reduction_indices=-1, keep_dims=True) + 1e-9
+    _sum = tf.compat.v1.reduce_sum(inputs, reduction_indices=-1, keep_dims=True) + 1e-9
     return inputs / _sum
 
 
@@ -31,13 +31,14 @@ def bilinear_attention_layer(inputs, attend, length, n_hidden, l2_reg, random_ba
     """
     batch_size = tf.shape(inputs)[0]
     max_len = tf.shape(inputs)[1]
-    w = tf.get_variable(
+    w = tf.compat.v1.get_variable(
         name='att_w_' + str(layer_id),
         shape=[n_hidden, n_hidden],
         # initializer=tf.random_normal_initializer(mean=0., stddev=np.sqrt(2. / (n_hidden + n_hidden))),
         initializer=tf.random_uniform_initializer(-random_base, random_base),
         # initializer=tf.random_uniform_initializer(-np.sqrt(6.0 / (n_hidden + n_hidden)), np.sqrt(6.0 / (n_hidden + n_hidden))),
-        regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        #regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        regularizer=tf.keras.regularizers.l2(l2_reg)
     )
     inputs = tf.reshape(inputs, [-1, n_hidden])
     tmp = tf.reshape(tf.matmul(inputs, w), [-1, max_len, n_hidden])
@@ -60,13 +61,14 @@ def dot_produce_attention_layer(inputs, length, n_hidden, l2_reg, random_base, l
     """
     batch_size = tf.shape(inputs)[0]
     max_len = tf.shape(inputs)[1]
-    u = tf.get_variable(
+    u = tf.compat.v1.get_variable(
         name='att_u_' + str(layer_id),
         shape=[n_hidden, 1],
         initializer=tf.random_normal_initializer(mean=0., stddev=np.sqrt(2. / (n_hidden + 1))),
         # initializer=tf.random_uniform_initializer(-random_base, random_base),
         # initializer=tf.random_uniform_initializer(-np.sqrt(6.0 / (n_hidden + 1)), np.sqrt(6.0 / (n_hidden + 1))),
-        regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        #regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        regularizer=tf.keras.regularizers.l2(l2_reg)
     )
     inputs = tf.reshape(inputs, [-1, n_hidden])
     tmp = tf.reshape(tf.matmul(inputs, u), [batch_size, 1, max_len])
@@ -86,28 +88,31 @@ def mlp_attention_layer(inputs, length, n_hidden, l2_reg, random_base, layer_id=
     """
     batch_size = tf.shape(inputs)[0]
     max_len = tf.shape(inputs)[1]
-    w = tf.get_variable(
+    w = tf.compat.v1.get_variable(
         name='att_w_' + str(layer_id),
         shape=[n_hidden, n_hidden],
         # initializer=tf.random_normal_initializer(mean=0., stddev=np.sqrt(2. / (n_hidden + n_hidden))),
         initializer=tf.random_uniform_initializer(-random_base, random_base),
         # initializer=tf.random_uniform_initializer(-np.sqrt(6.0 / (n_hidden + n_hidden)), np.sqrt(6.0 / (n_hidden + n_hidden))),
-        regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        regularizer=tf.keras.regularizers.l2(l2_reg)
+        #tf.contrib.layers.l2_regularizer(l2_reg)
     )
-    b = tf.get_variable(
+    b = tf.compat.v1.get_variable(
         name='att_b' + str(layer_id),
         shape=[n_hidden],
         # initializer=tf.random_normal_initializer(mean=0.0, stddev=np.sqrt(2. / (n_hidden + n_hidden))),
         initializer=tf.random_uniform_initializer(-0., 0.),
-        regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        regularizer=tf.keras.regularizers.l2(l2_reg)
+        #regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
     )
-    u = tf.get_variable(
+    u = tf.compat.v1.get_variable(
         name='att_u_' + str(layer_id),
         shape=[n_hidden, 1],
         # initializer=tf.random_normal_initializer(mean=0., stddev=np.sqrt(2. / (n_hidden + 1))),
         initializer=tf.random_uniform_initializer(-random_base, random_base),
         # initializer=tf.random_uniform_initializer(-np.sqrt(6.0 / (n_hidden + 1)), np.sqrt(6.0 / (n_hidden + 1))),
-        regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        #regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        regularizer=tf.keras.regularizers.l2(l2_reg)
     )
     inputs = tf.reshape(inputs, [-1, n_hidden])
     tmp = tf.tanh(tf.matmul(inputs, w) + b)
@@ -128,21 +133,23 @@ def Mlp_attention_layer(inputs, length, n_hidden, l2_reg, random_base, layer_id=
     """
     batch_size = tf.shape(inputs)[0]
     max_len = tf.shape(inputs)[1]
-    w = tf.get_variable(
+    w = tf.compat.v1.get_variable(
         name='att_w_' + str(layer_id),
         shape=[n_hidden, n_hidden],
         initializer=tf.random_normal_initializer(mean=0., stddev=np.sqrt(2. / (n_hidden + n_hidden))),
         # initializer=tf.random_uniform_initializer(-random_base, random_base),
         # initializer=tf.random_uniform_initializer(-np.sqrt(6.0 / (n_hidden + n_hidden)), np.sqrt(6.0 / (n_hidden + n_hidden))),
-        regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        #regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        regularizer=tf.keras.regularizers.l2(l2_reg)
     )
-    u = tf.get_variable(
+    u = tf.compat.v1.get_variable(
         name='att_u_' + str(layer_id),
         shape=[n_hidden, 1],
         initializer=tf.random_normal_initializer(mean=0., stddev=np.sqrt(2. / (n_hidden + 1))),
         # initializer=tf.random_uniform_initializer(-random_base, random_base),
         # initializer=tf.random_uniform_initializer(-np.sqrt(6.0 / (n_hidden + 1)), np.sqrt(6.0 / (n_hidden + 1))),
-        regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        #regularizer=tf.contrib.layers.l2_regularizer(l2_reg)
+        regularizer=tf.keras.regularizers.l2(l2_reg)
     )
     inputs = tf.transpose(tf.reshape(inputs, [-1, n_hidden]), [1, 0])
     tmp = tf.transpose(tf.tanh(tf.matmul(w, inputs)), [1, 0])
