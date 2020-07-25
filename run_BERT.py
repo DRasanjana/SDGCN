@@ -18,46 +18,44 @@ from models.gcn_bert import GCN_BERT
 # ==================================================
 
 # "Restaurants" or "Laptops"
-use_data = "Laptops"
+use_data = "Restaurants"
 # "GCN_BERT"
 use_model = "GCN_BERT"
 
-datas = {"Restaurants_train": "data/data_res/bert_embedding/Restaurants_Train_bert.txt",
-         "Restaurants_test": "data/data_res/bert_embedding/Restaurants_Test_bert.txt",
-         "Restaurants_embedding": 'data/data_res/Restaurants_glove.42B.300d.txt',
-         "Laptops_train": "data/data_lap/bert_embedding/Laptops_Train_bert.txt",
-         "Laptops_test": "data/data_lap/bert_embedding/Laptops_Test_bert.txt",
-         "Laptops_embedding": 'data/data_lap/Laptops_glove.42B.300d.txt'}
+datas = {"Restaurants_train": "data/data_res/train.csv",
+         "Restaurants_test": "data/data_res/test.csv",
+         "Restaurants_embedding": 'data/data_res/glove.840B.300d.txt'
+       }
 #Train model
-tf.flags.DEFINE_string("which_relation", 'global', "use which relation.") #'adjacent','global','rule'
-tf.flags.DEFINE_string("which_model", use_model, "Model isused.")
+tf.compat.v1.flags.DEFINE_string("which_relation", 'global', "use which relation.") #'adjacent','global','rule'
+tf.compat.v1.flags.DEFINE_string("which_model", use_model, "Model isused.")
 
 # Data loading params
-tf.flags.DEFINE_string("which_data", use_data, "Data is used.")
-tf.flags.DEFINE_string("train_file", datas[use_data+"_train"], "Train data source.")
-tf.flags.DEFINE_string("test_file", datas[use_data+"_test"], "Test data source.")
+tf.compat.v1.flags.DEFINE_string("which_data", use_data, "Data is used.")
+tf.compat.v1.flags.DEFINE_string("train_file", datas[use_data+"_train"], "Train data source.")
+tf.compat.v1.flags.DEFINE_string("test_file", datas[use_data+"_test"], "Test data source.")
 
 #word embedding
-tf.flags.DEFINE_string('embedding_file_path', datas[use_data+"_embedding"], 'embedding file')
-tf.flags.DEFINE_integer('word_embedding_dim', 768, 'dimension of word embedding')
+tf.compat.v1.flags.DEFINE_string('embedding_file_path', datas[use_data+"_embedding"], 'embedding file')
+tf.compat.v1.flags.DEFINE_integer('word_embedding_dim', 768, 'dimension of word embedding')
 
 # Model Hyperparameters
-tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
-tf.flags.DEFINE_float("learning_rate", 1e-3, "learning_rate (default: 1e-3)")
-tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
-tf.flags.DEFINE_float("l2_reg_lambda", 0.01, "L2 regularization lambda (default: 0.0)")
+tf.compat.v1.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
+tf.compat.v1.flags.DEFINE_float("learning_rate", 1e-3, "learning_rate (default: 1e-3)")
+tf.compat.v1.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
+tf.compat.v1.flags.DEFINE_float("l2_reg_lambda", 0.01, "L2 regularization lambda (default: 0.0)")
 
 # Training parameters
-tf.flags.DEFINE_integer("batch_size", 32, "Batch Size (default: 32)")
-tf.flags.DEFINE_integer("num_epochs", 80, "Number of training epochs ")
-tf.flags.DEFINE_integer("evaluate_every", 5, "Evaluate model on dev set after this many steps")
-tf.flags.DEFINE_integer("checkpoint_every", 5, "Save model after this many steps")
-tf.flags.DEFINE_integer("num_checkpoints", 1, "Number of checkpoints to store")
+tf.compat.v1.flags.DEFINE_integer("batch_size", 32, "Batch Size (default: 32)")
+tf.compat.v1.flags.DEFINE_integer("num_epochs", 80, "Number of training epochs ")
+tf.compat.v1.flags.DEFINE_integer("evaluate_every", 5, "Evaluate model on dev set after this many steps")
+tf.compat.v1.flags.DEFINE_integer("checkpoint_every", 5, "Save model after this many steps")
+tf.compat.v1.flags.DEFINE_integer("num_checkpoints", 1, "Number of checkpoints to store")
 # Misc Parameters
-tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
-tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
+tf.compat.v1.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
+tf.compat.v1.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
-FLAGS = tf.flags.FLAGS
+FLAGS =tf.compat.v1.flags.FLAGS
 # FLAGS._parse_flags()
 # print("\nParameters:")
 # for attr, value in sorted(FLAGS.__flags.items()):
@@ -131,20 +129,13 @@ def preprocess():
     train_targets_position  = data_helpers.get_position_2(train_target_position,train_targets_num,max_target_num)
     test_targets_position  = data_helpers.get_position_2(test_target_position,test_targets_num,max_target_num)
     if use_data == 'Restaurants':
-        train_x = np.load("data/data_res/bert_embedding/Res_Train_Embedding.npy")                   #([3608,80,768])
-        train_target = np.load("data/data_res/bert_embedding/Res_Train_target_Embedding.npy")       #([3608,23,768])
-        train_targets = np.load("data/data_res/bert_embedding/Res_Train_targets_Embedding.npy")     #([3608,13,23,768])
-        test_x = np.load("data/data_res/bert_embedding/Res_Test_Embedding.npy")                     #([1120,80,768])
-        test_target = np.load("data/data_res/bert_embedding/Res_Test_target_Embedding.npy")         #([1120,23,768])
-        test_targets = np.load("data/data_res/bert_embedding/Res_Test_targets_Embedding.npy")      #([1120,13,23,768])
+        train_x = np.load("data/data_res/Train_Embedding.npy")                   #([3608,80,768])
+        train_target = np.load("data/data_res/Train_target_Embedding.npy")       #([3608,23,768])
+        train_targets = np.load("data/data_res/Train_targets_Embedding.npy")     #([3608,13,23,768])
+        test_x = np.load("data/data_res/Test_Embedding.npy")                     #([1120,80,768])
+        test_target = np.load("data/data_res/Test_target_Embedding.npy")         #([1120,23,768])
+        test_targets = np.load("data/data_res/Test_targets_Embedding.npy")      #([1120,13,23,768])
 
-    if use_data == 'Laptops':
-        train_x = np.load("data/data_lap/bert_embedding/Lap_Train_Embedding.npy")                   #([3608,80,768])
-        train_target = np.load("data/data_lap/bert_embedding/Lap_Train_target_Embedding.npy")       #([3608,23,768])
-        train_targets = np.load("data/data_lap/bert_embedding/Lap_Train_targets_Embedding.npy")     #([3608,13,23,768])
-        test_x = np.load("data/data_lap/bert_embedding/Lap_Test_Embedding.npy")                     #([1120,80,768])
-        test_target = np.load("data/data_lap/bert_embedding/Lap_Test_target_Embedding.npy")         #([1120,23,768])
-        test_targets = np.load("data/data_lap/bert_embedding/Lap_Test_targets_Embedding.npy")      #([1120,13,23,768])
 
     #Relation Matrix
     #use test_target to creat the relation
@@ -190,10 +181,10 @@ def train(Train, Test, word_embedding):
     # ==================================================
 
     with tf.Graph().as_default():
-        session_conf = tf.ConfigProto(
+        session_conf = tf.compat.v1.ConfigProto(
           allow_soft_placement=FLAGS.allow_soft_placement,
           log_device_placement=FLAGS.log_device_placement)
-        sess = tf.Session(config=session_conf)
+        sess = tf.compat.v1.Session(config=session_conf)
         with sess.as_default():
             model = eval(use_model)(
                 sequence_length=Train['x'].shape[1],
@@ -203,16 +194,16 @@ def train(Train, Test, word_embedding):
                 word_embedding_dim = FLAGS.word_embedding_dim,
                 l2_reg_lambda=FLAGS.l2_reg_lambda)
 
-            writer = tf.summary.FileWriter("logs/LSTM_GCN3", sess.graph)
+            writer = tf.compat.v1.summary.FileWriter("logs/LSTM_GCN3", sess.graph)
 
-            vs = tf.trainable_variables()
+            vs = tf.compat.v1.trainable_variables()
             print('There are %d train_able_variables in the Graph: ' % len(vs))
             for v in vs:
                 print(v)
 
             # Define Training procedure
             global_step = tf.Variable(0, name="global_step", trainable=False)
-            optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
+            optimizer = tf.compat.v1.train.AdamOptimizer(FLAGS.learning_rate)
             grads_and_vars = optimizer.compute_gradients(model.loss)
             train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
@@ -220,11 +211,11 @@ def train(Train, Test, word_embedding):
             grad_summaries = []
             for g, v in grads_and_vars:
                 if g is not None:
-                    grad_hist_summary = tf.summary.histogram("{}/grad/hist".format(v.name), g)
-                    sparsity_summary = tf.summary.scalar("{}/grad/sparsity".format(v.name), tf.nn.zero_fraction(g))
+                    grad_hist_summary = tf.compat.v1.summary.histogram("{}/grad/hist".format(v.name), g)
+                    sparsity_summary = tf.compat.v1.summary.scalar("{}/grad/sparsity".format(v.name), tf.nn.zero_fraction(g))
                     grad_summaries.append(grad_hist_summary)
                     grad_summaries.append(sparsity_summary)
-            grad_summaries_merged = tf.summary.merge(grad_summaries)
+            grad_summaries_merged = tf.compat.v1.summary.merge(grad_summaries)
 
             # Output directory for models and summaries
             timestamp = str(int(time.time()))
@@ -232,18 +223,18 @@ def train(Train, Test, word_embedding):
             print("Writing to {}\n".format(out_dir))
 
             # Summaries for loss and accuracy
-            loss_summary = tf.summary.scalar("loss", model.loss)
-            acc_summary = tf.summary.scalar("accuracy", model.accuracy)
+            loss_summary = tf.compat.v1.summary.scalar("loss", model.loss)
+            acc_summary = tf.compat.v1.summary.scalar("accuracy", model.accuracy)
 
             # Train Summaries
-            train_summary_op = tf.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
+            train_summary_op = tf.compat.v1.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
             train_summary_dir = os.path.join(out_dir, "summaries", "train")
-            train_summary_writer = tf.summary.FileWriter(train_summary_dir, sess.graph)
+            train_summary_writer = tf.compat.v1.summary.FileWriter(train_summary_dir, sess.graph)
 
             # Test summaries
-            test_summary_op = tf.summary.merge([loss_summary, acc_summary])
+            test_summary_op = tf.compat.v1.summary.merge([loss_summary, acc_summary])
             test_summary_dir = os.path.join(out_dir, "summaries", "test")
-            test_summary_writer = tf.summary.FileWriter(test_summary_dir, sess.graph)
+            test_summary_writer = tf.compat.v1.summary.FileWriter(test_summary_dir, sess.graph)
 
             # Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
             checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
@@ -252,13 +243,13 @@ def train(Train, Test, word_embedding):
                 os.makedirs(checkpoint_dir)
             # else:
             #     raise Exception('The checkpoint_dir already exists:',checkpoint_dir)
-            saver = tf.train.Saver(tf.global_variables(), max_to_keep=FLAGS.num_checkpoints)
+            saver = tf.compat.v1.train.Saver(tf.compat.v1.global_variables(), max_to_keep=FLAGS.num_checkpoints)
 
             # Write vocabulary
             # vocab_processor.save(os.path.join(out_dir, "vocab"))
 
             # Initialize all variables
-            sess.run(tf.global_variables_initializer())
+            sess.run(tf.compat.v1.global_variables_initializer())
 
             def train_step(x_batch,T_batch,Ts_batch,x_len_batch,T_len_batch,Ts_len_batch,R_Self_batch,R_Cross_batxh,T_W_batch,T_P_batch,Ts_P_batch,y_batch):
                 """
@@ -325,7 +316,7 @@ def train(Train, Test, word_embedding):
             for batch in batches:
                 x_batch,T_batch,Ts_batch,x_len_batch,T_len_batch,Ts_len_batch,R_Self_batch,R_Cross_batxh,T_W_batch,T_P_batch,Ts_P_batch,y_batch = zip(*batch)
                 train_step(x_batch,T_batch,Ts_batch,x_len_batch,T_len_batch,Ts_len_batch,R_Self_batch,R_Cross_batxh,T_W_batch,T_P_batch,Ts_P_batch,y_batch)
-                current_step = tf.train.global_step(sess, global_step)
+                current_step = tf.compat.v1.train.global_step(sess, global_step)
 
                 if current_step % FLAGS.evaluate_every == 0:
                     print('\nBy now ,the max test acc is: ', max_test_acc)
@@ -374,4 +365,3 @@ if __name__ == '__main__':
 	Train, Test, word_embedding = preprocess()
 	#模型训练
 	train_acc, dev_acc, max_test_acc,max_test_F1_macro,max_test_step, train_all_softmax, test_all_softmax = train(Train, Test, word_embedding)
-

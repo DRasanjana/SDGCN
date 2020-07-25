@@ -4,9 +4,14 @@ import re
 import itertools
 from collections import Counter
 
+import string
+import re
+import csv
 
 
-
+def remove_punct(text):
+    table = str.maketrans("", "", string.punctuation)
+    return text.translate(table)
 
 def load_data_and_labels(positive_data_file):
     """
@@ -14,31 +19,39 @@ def load_data_and_labels(positive_data_file):
     Returns split sentences and labels.
     """
     # Load data from files
-    examples = list(open(positive_data_file, "r").readlines())
-    examples = [s.strip() for s in examples]
-    # find the input examples
-    input = []
-    target = []
-    for index,i in enumerate(examples):
-        if index%3 == 0:
-            i_target =examples[index + 1].strip()
-            i = i.replace("$T$", i_target)
-            input.append(i)
-            target.append(i_target)
-    x_text = input
-    # Generate labels
-    lable=[]
-    for index,i in enumerate(examples):
-        if index%3 == 2:
-            if i[0:1]=='1':
-                lable.append([1,0,0])
-            if i[0:1]=='0':
-                lable.append([0,1,0])
-            if i[0:1]=='-':
-                lable.append([0,0,1])
-    y = np.array(lable)
-    return [x_text,target, y]
 
+    with open(positive_data_file, 'r', encoding="utf8") as csvfile:
+        aspectreader = csv.reader(csvfile, delimiter=',')
+        j = 0
+        count = 0
+        input = []
+        target = []
+        lable = []
+        for row in aspectreader:
+            if (j == 0):
+                j = 1
+            else:
+                sent = row[0].lower()
+                sent = remove_punct(sent)
+                sent.replace('\d+', '')
+                # sent.replace(r'\b\w\b', '').replace(r'\s+', ' ')
+                # sent.replace('\s+', ' ', regex=True)
+                # sent=re.sub(r"^\s+|\s+$", "", sent), sep='')
+                sent = re.sub(r"^\s+|\s+$", "", sent)
+                input.append(sent)
+                # nb_aspects = int(row[1])
+                aspect = row[1].lower()
+                target.append(aspect)
+                polarity = row[2]
+                if int(polarity)==1:
+                    lable.append([1, 0, 0])
+                elif int(polarity) == 0:
+                    lable.append([0, 1, 0])
+                elif int(polarity) == -1:
+                    lable.append([0, 0, 1])
+        x_text = input
+        y = np.array(lable)
+        return [x_text, target, y]
 
 def load_targets(positive_data_file):
     """
@@ -46,33 +59,68 @@ def load_targets(positive_data_file):
     output the targets' number of each sentences
     """
     # Load data from files
-    examples = list(open(positive_data_file, "r").readlines())
-    examples = [s.strip() for s in examples]
-
-    input = []
-    target = []
-    for index,i in enumerate(examples):
-        if index%3 == 0:
-            i_target =examples[index + 1].strip()
-            i = i.replace("$T$", i_target)
-            input.append(i)
-            target.append(i_target)
+    with open(positive_data_file, 'r', encoding="utf8") as csvfile:
+        aspectreader = csv.reader(csvfile, delimiter=',')
+        j = 0
+        count = 0
+        input = []
+        target = []
+        lable = []
+        examples=[]
+        ccc=[]
+        for row in aspectreader:
+            if (j == 0):
+                j = 1
+            else:
+                sent = row[0].lower()
+                sent = remove_punct(sent)
+                sent.replace('\d+', '')
+                # sent.replace(r'\b\w\b', '').replace(r'\s+', ' ')
+                # sent.replace('\s+', ' ', regex=True)
+                # sent=re.sub(r"^\s+|\s+$", "", sent), sep='')
+                sent = re.sub(r"^\s+|\s+$", "", sent)
+                examples.append(sent)
+                input.append(sent)
+                # nb_aspects = int(row[1])
+                aspect = row[1].lower()
+                target.append(aspect)
+                examples.append(aspect)
+                polarity = row[2]
+                examples.append(polarity)
+                ccc.append(sent+","+aspect+","+polarity+","+row[3]+","+row[4])
     x_text = input
     # find the same targets
     all_sentence = [s for s in x_text]
     targets_nums = [all_sentence.count(s) for s in all_sentence]
+    # ccc_num= [ccc.count(s) for s in ccc]
+    # for i in range(len(ccc_num)):
+    #     if ccc_num[i]>1:
+    #         print(str(i+2) +ccc[i])
+
+    # i=0
+    # while i<len(targets_nums):
+    #     act=int(targets_nums[i])
+    #     for j in range(act):
+    #         if not (targets_nums[i+j]==act):
+    #             print(x_text[i+j-1])
+    #             print(targets_nums[i+j])
+    #             print(i+j-1)
+    #     i=i+j+1
+
+
     targets = []
     i = 0
     while i < len(all_sentence):
         num = targets_nums[i]
         target = []
         for j in range(num):
-            target.append(examples[(i+j)*3+1])
+            target.append(examples[(i + j) * 3 + 1])
         for j in range(num):
             targets.append(target)
-        i = i+num
+        i = i + num
     targets_nums = np.array(targets_nums)
-    return [targets,targets_nums]
+    return [targets, targets_nums]
+
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
     """
@@ -116,7 +164,7 @@ def batch_iter2(data, batch_size, num_epochs, shuffle=True):
 
 
 def load_w2v(w2v_file, embedding_dim, is_skip=False):
-    fp = open(w2v_file)
+    fp = open(w2v_file,encoding="utf8")
     if is_skip:
         fp.readline()
     w2v = []
@@ -273,44 +321,98 @@ def get_position(input_file,max_len):
 
     """
     # Load data from files
-    examples = list(open(input_file, "r").readlines())
-    examples = [s.strip() for s in examples]
-    position = []
-    for index,i in enumerate(examples):
-        if index%3 == 0:
-            #找到$T$的位置
-            i_input = examples[index].strip().split(' ')
-            for index_j,j in enumerate(i_input):
-                if "$T$" in j:
-                    i_input[index_j] = '$T$'
-            i_target =examples[index + 1].strip().split(' ')
-            len_input = len(i_input)
-            len_target = len(i_target)
-            target_position  = i_input.index("$T$")
-            #target 前、中、后个数
-            target_b_len =  target_position
-            target_m_len = len_target
-            target_e_len = len_input - target_position - 1
-            target_b_list = list(range(1,target_b_len+1))
-            target_b_list.reverse()
-            target_m_list = [0 for j in range(target_m_len)]
-            target_e_list = list(range(1,target_e_len+1))
+    with open(input_file, 'r', encoding="utf8") as csvfile:
+        aspectreader = csv.reader(csvfile, delimiter=',')
+        j = 0
+        position = []
+        for row in aspectreader:
+            if (j == 0):
+                j = 1
+            else:
+                sent = row[0].lower()
+                sent = remove_punct(sent)
+                sent.replace('\d+', '')
+                # sent.replace(r'\b\w\b', '').replace(r'\s+', ' ')
+                # sent.replace('\s+', ' ', regex=True)
+                # sent=re.sub(r"^\s+|\s+$", "", sent), sep='')
+                sent = re.sub(r"^\s+|\s+$", "", sent)
+                # nb_aspects = int(row[1])
+                aspect = row[1].lower()
 
-            #让距离太远的变正0
-            Ls = len(target_b_list+target_m_list+target_e_list)
-            for index_j,j in enumerate(target_b_list):
-                if j>10:
-                    target_b_list[index_j] = Ls
-            for index_j,j in enumerate(target_e_list):
-                if j>10:
-                    target_e_list[index_j] = Ls
+                polarity = row[2]
+                start= int(row[3])
+                end= int(row[4])
+                sent_new = sent[0:start]+'$T$'+sent[end:]
+                i_input = sent_new.strip().split(' ')
+                for index_j, j in enumerate(i_input):
+                    if "$T$" in j:
+                        i_input[index_j] = '$T$'
+                i_target = aspect.split(' ')
+                len_input = len(i_input)
+                len_target = len(i_target)
+                target_position = i_input.index("$T$")
+                target_b_len = target_position
+                target_m_len = len_target
+                target_e_len = len_input - target_position - 1
+                target_b_list = list(range(1, target_b_len + 1))
+                target_b_list.reverse()
+                target_m_list = [0 for j in range(target_m_len)]
+                target_e_list = list(range(1, target_e_len + 1))
 
-            i_position = target_b_list+target_m_list+target_e_list
-            i_position_encoder = [(1 -j/Ls)  for j in i_position]
-            i_position_encoder = i_position_encoder + [0] * (max_len - len(i_position))
-            position.append(i_position_encoder)
+                # 让距离太远的变正0
+                Ls = len(target_b_list + target_m_list + target_e_list)
+                for index_j, j in enumerate(target_b_list):
+                    if j > 10:
+                        target_b_list[index_j] = Ls
+                for index_j, j in enumerate(target_e_list):
+                    if j > 10:
+                        target_e_list[index_j] = Ls
+
+                i_position = target_b_list + target_m_list + target_e_list
+                i_position_encoder = [(1 - j / Ls) for j in i_position]
+                i_position_encoder = i_position_encoder + [0] * (max_len - len(i_position))
+                position.append(i_position_encoder)
     position = np.array(position)
     return position
+
+    # examples = list(open(input_file, "r").readlines())
+    # examples = [s.strip() for s in examples]
+    # position = []
+    # for index,i in enumerate(examples):
+    #     if index%3 == 0:
+    #         #找到$T$的位置
+    #         i_input = examples[index].strip().split(' ')
+    #         for index_j,j in enumerate(i_input):
+    #             if "$T$" in j:
+    #                 i_input[index_j] = '$T$'
+    #         i_target =examples[index + 1].strip().split(' ')
+    #         len_input = len(i_input)
+    #         len_target = len(i_target)
+    #         target_position  = i_input.index("$T$")
+    #         #target 前、中、后个数
+    #         target_b_len =  target_position
+    #         target_m_len = len_target
+    #         target_e_len = len_input - target_position - 1
+    #         target_b_list = list(range(1,target_b_len+1))
+    #         target_b_list.reverse()
+    #         target_m_list = [0 for j in range(target_m_len)]
+    #         target_e_list = list(range(1,target_e_len+1))
+    #
+    #         #让距离太远的变正0
+    #         Ls = len(target_b_list+target_m_list+target_e_list)
+    #         for index_j,j in enumerate(target_b_list):
+    #             if j>10:
+    #                 target_b_list[index_j] = Ls
+    #         for index_j,j in enumerate(target_e_list):
+    #             if j>10:
+    #                 target_e_list[index_j] = Ls
+    #
+    #         i_position = target_b_list+target_m_list+target_e_list
+    #         i_position_encoder = [(1 -j/Ls)  for j in i_position]
+    #         i_position_encoder = i_position_encoder + [0] * (max_len - len(i_position))
+    #         position.append(i_position_encoder)
+    # position = np.array(position)
+    # return position
 
 
 
@@ -333,3 +435,8 @@ def get_position_2(target_position,targets_num,max_target_num):
             i += 1
 
     return np.array(positions)
+
+#
+# if __name__ == '__main__':
+#     get_position("data/data_res/train.csv",100)
+    #get_position("data/data_res/New folder/Restaurants_Train.txt", 100)
